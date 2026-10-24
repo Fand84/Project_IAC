@@ -1,0 +1,20 @@
+INTREBARE: Care dintre următoarele sunt numere pare?
+[x] 1
+
+EXPLICATIE: Numerele pare sunt divizibile cu 2.
+
+---
+
+INTREBARE: Care este capitala Franței?
+[ ] Londra
+[x] Paris
+[ ] Roma
+EXPLICATIE: Paris este capitala Franței.
+
+---
+
+INTREBARE: Care dintre acestea sunt limbaje de programare?
+[x] C#
+[x] Java
+[ ] HTML
+[x] C++
