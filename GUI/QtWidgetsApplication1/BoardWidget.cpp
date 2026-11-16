@@ -1,14 +1,20 @@
-
 #include "BoardWidget.h"
-
+#include "../../Core/Board.h"
 #include <QPainter>
 #include <QPixmap>
 #include <QColor>
 #include <QTransform>
-
+#include <QString>
+#include <QRect>
 BoardWidget::BoardWidget(QWidget* parent)
     : QWidget(parent)
 {}
+
+void BoardWidget::setBoard(const Board* board)
+{
+    board_ = board;
+    update();
+}
 
 void BoardWidget::paintEvent(QPaintEvent*)
 {
@@ -26,6 +32,7 @@ void BoardWidget::paintEvent(QPaintEvent*)
     }
 
     painter.drawPixmap(rect(), arena);
+
 
     // 2. Incarcam castelele normale
     QPixmap imagineRosie(":/images/castel_rosu_normal.png");
@@ -79,4 +86,48 @@ void BoardWidget::paintEvent(QPaintEvent*)
     painter.drawPixmap(
         xAlbastru, liniaJos - castelAlbastru.height(), castelAlbastru
     );
+
+    if (board_ != nullptr)
+    {
+        const Castle& rosu = board_->getPlayerCastle();
+        const Castle& albastru = board_->getComputerCastle();
+
+        painter.fillRect(QRect(20, 10, 185, 30), QColor(0, 0, 0, 160));
+        painter.fillRect(QRect(width() - 205, 10, 185, 30), QColor(0, 0, 0, 160));
+
+        painter.setPen(Qt::white);
+
+        painter.drawText(
+            QRect(20, 10, 185, 30),
+            Qt::AlignCenter,
+            QString("Rosu: %1/%2 HP")
+            .arg(rosu.getCurrentHp())
+            .arg(rosu.getMaxHp())
+        );
+
+        painter.drawText(
+            QRect(width() - 205, 10, 185, 30),
+            Qt::AlignCenter,
+            QString("Albastru: %1/%2 HP")
+            .arg(albastru.getCurrentHp())
+            .arg(albastru.getMaxHp())
+        );
+
+        const int latimeBara = 185;
+        const int inaltimeBara = 10;
+
+        // Calculam cat din bara trebuie colorat
+        int viataRosu = latimeBara * rosu.getCurrentHp() / rosu.getMaxHp();
+        int viataAlbastru = latimeBara * albastru.getCurrentHp() / albastru.getMaxHp();
+
+        // Fundalul barelor
+        painter.fillRect(20, 45, latimeBara, inaltimeBara, QColor(40, 40, 40));
+        painter.fillRect(width() - 205, 45, latimeBara, inaltimeBara, QColor(40, 40, 40));
+
+        // Partea verde, proportionala cu viata ramasa
+        painter.fillRect(20, 45, viataRosu, inaltimeBara, QColor(217, 169, 79));
+        painter.fillRect(width() - 205, 45, viataAlbastru, inaltimeBara, QColor(217, 169, 79));
+    }
+
+
 }

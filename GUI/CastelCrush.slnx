@@ -2,5 +2,5 @@
   <Configurations>
     <Platform Name="x64" />
   </Configurations>
-  <Project Path="QtWidgetsApplication1/ CastelCrush.vcxproj" Id="c23f14f9-398e-47ad-a0b4-e6ea22ba8b1b" />
+  <Project Path="QtWidgetsApplication1/CastelCrush.vcxproj" Id="c23f14f9-398e-47ad-a0b4-e6ea22ba8b1b" />
 </Solution>

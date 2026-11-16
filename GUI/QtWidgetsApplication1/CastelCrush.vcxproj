@@ -96,6 +96,7 @@
     <QtRcc Include="Resources.qrc" />
     <QtUic Include="GameWindow.ui" />
     <QtMoc Include="GameWindow.h" />
+    <ClCompile Include="..\..\Core\Board.cpp" />
     <ClCompile Include="BoardWidget.cpp" />
     <ClCompile Include="GameWindow.cpp" />
     <ClCompile Include="main.cpp" />
