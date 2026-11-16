@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>arena.png</file>
+        <file>castel_albastru_deteriorat.png</file>
+        <file>castel_albastru_distrus.png</file>
+        <file>castel_albastru_grav_deteriorat.png</file>
+        <file>castel_albastru_normal.png</file>
+        <file>castel_rosu_deteriorat.png</file>
+        <file>castel_rosu_distrus.png</file>
+        <file>castel_rosu_grav_deteriorat.png</file>
+        <file>castel_rosu_normal.png</file>
+    </qresource>
+</RCC>
