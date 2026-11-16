@@ -23,18 +23,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="QtWidgetsApplication1.qrc">
-      <Filter>Resource Files</Filter>
-    </QtRcc>
-    <QtUic Include="QtWidgetsApplication1.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtMoc Include="QtWidgetsApplication1.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <ClCompile Include="QtWidgetsApplication1.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <QtRcc Include="Resources.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
@@ -44,6 +32,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BoardWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\Board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,5 +50,15 @@
     <Image Include="..\..\..\..\Desktop\arena.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="GameWindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="GameWindow.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
   </ItemGroup>
 </Project>
