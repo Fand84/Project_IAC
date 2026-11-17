@@ -40,6 +40,9 @@
     <ClCompile Include="..\..\Core\Board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EnergyWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoardWidget.h">
@@ -53,6 +56,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="GameWindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="EnergyWidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
