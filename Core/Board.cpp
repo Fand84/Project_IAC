@@ -34,6 +34,28 @@ Castle& Board::getComputerCastle() noexcept {
     return computerCastle_;
 }
 
+double Board::getPlayerEnergy() const noexcept {
+    return playerEnergy_;
+}
+
+double Board::getMaxEnergy() const noexcept {
+    return maxEnergy_;
+}
+
+bool Board::spendPlayerEnergy(double cost) noexcept {
+    if (cost < 0.0 || playerEnergy_ < cost) {
+        return false;
+    }
+    playerEnergy_ -= cost;
+    return true;
+}
+
+void Board::updateEnergy(double deltaTime) noexcept {
+    if (deltaTime > 0.0 && !isGameOver()) {
+        playerEnergy_ = std::min(maxEnergy_, playerEnergy_ + energyRegenRate_ * deltaTime);
+    }
+}
+
 bool Board::isGameOver() const noexcept {
     return playerCastle_.isDestroyed() || computerCastle_.isDestroyed();
 }
@@ -49,4 +71,5 @@ bool Board::isComputerWinner() const noexcept {
 void Board::reset() noexcept {
     playerCastle_.reset();
     computerCastle_.reset();
+    playerEnergy_ = 5.0;
 }
