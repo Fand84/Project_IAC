@@ -6,6 +6,8 @@
 #include <QTransform>
 #include <QString>
 #include <QRect>
+#include <QSize>
+
 BoardWidget::BoardWidget(QWidget* parent)
     : QWidget(parent)
 {}
@@ -19,6 +21,7 @@ void BoardWidget::setBoard(const Board* board)
 void BoardWidget::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
     // 1. Desenam fundalul
     QPixmap arena(":/images/arena.png");
@@ -33,33 +36,71 @@ void BoardWidget::paintEvent(QPaintEvent*)
 
     painter.drawPixmap(rect(), arena);
 
+    // 2. Alegem imaginile in functie de viata castelelor
+    QString stareRosu = "normal";
+    QString stareAlbastru = "normal";
 
-    // 2. Incarcam castelele normale
-    QPixmap imagineRosie(":/images/castel_rosu_normal.png");
-    QPixmap imagineAlbastra(":/images/castel_albastru_normal.png");
-
-    if (imagineRosie.isNull() || imagineAlbastra.isNull())
+    if (board_ != nullptr)
     {
-        return;
+        const Castle& rosu = board_->getPlayerCastle();
+        const Castle& albastru = board_->getComputerCastle();
+
+        // Verificam castelul rosu
+        if (rosu.getCurrentHp() <= 0)
+        {
+            stareRosu = "distrus";
+        }
+        else if (rosu.getCurrentHp() <= rosu.getMaxHp() / 2)
+        {
+            stareRosu = "grav_deteriorat";
+        }
+        else if (rosu.getCurrentHp() <= rosu.getMaxHp() * 3 / 4)
+        {
+            stareRosu = "deteriorat";
+        }
+
+        // Verificam castelul albastru
+        if (albastru.getCurrentHp() <= 0)
+        {
+            stareAlbastru = "distrus";
+        }
+        else if (albastru.getCurrentHp() <= albastru.getMaxHp() / 2)
+        {
+            stareAlbastru = "grav_deteriorat";
+        }
+        else if (albastru.getCurrentHp() <= albastru.getMaxHp() * 3 / 4)
+        {
+            stareAlbastru = "deteriorat";
+        }
     }
+
+    QPixmap imagineRosie(
+        QString(":/images/castel_rosu_%1.png").arg(stareRosu)
+    );
+
+    QPixmap imagineAlbastra(
+        QString(":/images/castel_albastru_%1.png").arg(stareAlbastru)
+    );
+
+    QPixmap imagineAlbastraOglindita = imagineAlbastra.transformed(
+        QTransform().scale(-1, 1),
+        Qt::FastTransformation
+    );
 
     // 3. Adaptam dimensiunile la fereastra
     int latimeCastel = width() / 5;
     int inaltimeCastel = height() / 2;
 
-    QPixmap castelRosu = imagineRosie.scaled(
+    QSize dimensiuneRosie = imagineRosie.size();
+    dimensiuneRosie.scale(
         latimeCastel, inaltimeCastel,
-        Qt::KeepAspectRatio,
-        Qt::SmoothTransformation
+        Qt::KeepAspectRatio
     );
 
-    QPixmap castelAlbastru = imagineAlbastra.scaled(
+    QSize dimensiuneAlbastra = imagineAlbastra.size();
+    dimensiuneAlbastra.scale(
         latimeCastel, inaltimeCastel,
-        Qt::KeepAspectRatio,
-        Qt::SmoothTransformation
-    ).transformed(
-        QTransform().scale(-1, 1),
-        Qt::SmoothTransformation
+        Qt::KeepAspectRatio
     );
 
     // 4. Stabilim pozitiile
@@ -68,23 +109,47 @@ void BoardWidget::paintEvent(QPaintEvent*)
     int liniaJos = height() * 82 / 100;
 
     int xRosu = margine;
-    int xAlbastru = width() - margine - castelAlbastru.width();
+    int xAlbastru = width() - margine - dimensiuneAlbastra.width();
 
     // 5. Desenam castelele pe ambele linii
     painter.drawPixmap(
-        xRosu, liniaSus - castelRosu.height(), castelRosu
+        QRect(
+            xRosu,
+            liniaSus - dimensiuneRosie.height(),
+            dimensiuneRosie.width(),
+            dimensiuneRosie.height()
+        ),
+        imagineRosie
     );
 
     painter.drawPixmap(
-        xAlbastru, liniaSus - castelAlbastru.height(), castelAlbastru
+        QRect(
+            xAlbastru,
+            liniaSus - dimensiuneAlbastra.height(),
+            dimensiuneAlbastra.width(),
+            dimensiuneAlbastra.height()
+        ),
+        imagineAlbastraOglindita
     );
 
     painter.drawPixmap(
-        xRosu, liniaJos - castelRosu.height(), castelRosu
+        QRect(
+            xRosu,
+            liniaJos - dimensiuneRosie.height(),
+            dimensiuneRosie.width(),
+            dimensiuneRosie.height()
+        ),
+        imagineRosie
     );
 
     painter.drawPixmap(
-        xAlbastru, liniaJos - castelAlbastru.height(), castelAlbastru
+        QRect(
+            xAlbastru,
+            liniaJos - dimensiuneAlbastra.height(),
+            dimensiuneAlbastra.width(),
+            dimensiuneAlbastra.height()
+        ),
+        imagineAlbastraOglindita
     );
 
     if (board_ != nullptr)
@@ -125,9 +190,52 @@ void BoardWidget::paintEvent(QPaintEvent*)
         painter.fillRect(width() - 205, 45, latimeBara, inaltimeBara, QColor(40, 40, 40));
 
         // Partea verde, proportionala cu viata ramasa
-        painter.fillRect(20, 45, viataRosu, inaltimeBara, QColor(217, 169, 79));
-        painter.fillRect(width() - 205, 45, viataAlbastru, inaltimeBara, QColor(217, 169, 79));
+        QColor culoareRosu(80, 190, 90);
+        QColor culoareAlbastru(80, 190, 90);
+
+        if (rosu.getCurrentHp() <= rosu.getMaxHp() / 2)
+        {
+            culoareRosu = QColor(220, 60, 60);
+        }
+        else if (rosu.getCurrentHp() <= rosu.getMaxHp() * 3 / 4)
+        {
+            culoareRosu = QColor(240, 190, 60);
+        }
+
+        if (albastru.getCurrentHp() <= albastru.getMaxHp() / 2)
+        {
+            culoareAlbastru = QColor(220, 60, 60);
+        }
+        else if (albastru.getCurrentHp() <= albastru.getMaxHp() * 3 / 4)
+        {
+            culoareAlbastru = QColor(240, 190, 60);
+        }
+
+        painter.fillRect(20, 45, viataRosu, inaltimeBara, culoareRosu);
+        painter.fillRect(width() - 205, 45, viataAlbastru, inaltimeBara, culoareAlbastru);
+
+        QString mesaj;
+
+        if (rosu.getCurrentHp() <= 0 && albastru.getCurrentHp() <= 0)
+        {
+            mesaj = "Remiza!";
+        }
+        else if (rosu.getCurrentHp() <= 0)
+        {
+            mesaj = "Albastru a castigat!";
+        }
+        else if (albastru.getCurrentHp() <= 0)
+        {
+            mesaj = "Rosu a castigat!";
+        }
+
+        if (!mesaj.isEmpty())
+        {
+            QRect zonaMesaj(width() / 2 - 160, 15, 320, 40);
+
+            painter.fillRect(zonaMesaj, QColor(0, 0, 0, 180));
+            painter.setPen(Qt::white);
+            painter.drawText(zonaMesaj, Qt::AlignCenter, mesaj);
+        }
     }
-
-
 }
