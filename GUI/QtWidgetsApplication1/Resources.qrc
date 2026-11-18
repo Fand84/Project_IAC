@@ -9,5 +9,7 @@
         <file>castel_rosu_distrus.png</file>
         <file>castel_rosu_grav_deteriorat.png</file>
         <file>castel_rosu_normal.png</file>
+        <file>arena_meniu.png</file>
+        <file>buton_start_medieval.png</file>
     </qresource>
 </RCC>
