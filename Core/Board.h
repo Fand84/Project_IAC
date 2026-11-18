@@ -35,6 +35,11 @@ private:
     Castle playerCastle_;
     Castle computerCastle_;
 
+  
+    double maxEnergy_{ 10.0 };
+    double playerEnergy_{ 5.0 };
+    double energyRegenRate_{ 1.0 };
+
 public:
     explicit Board(double laneLength = 1000.0, int castleHp = 1000) noexcept;
 
@@ -46,6 +51,12 @@ public:
     [[nodiscard]] const Castle& getComputerCastle() const noexcept;
     [[nodiscard]] Castle& getPlayerCastle() noexcept;
     [[nodiscard]] Castle& getComputerCastle() noexcept;
+
+    // Metode pentru energie
+    [[nodiscard]] double getPlayerEnergy() const noexcept;
+    [[nodiscard]] double getMaxEnergy() const noexcept;
+    bool spendPlayerEnergy(double cost) noexcept;
+    void updateEnergy(double deltaTime) noexcept;
 
     [[nodiscard]] bool isGameOver() const noexcept;
     [[nodiscard]] bool isPlayerWinner() const noexcept;

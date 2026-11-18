@@ -11,6 +11,7 @@
 #include <QColor>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
+#include <QTimer>
 
 GameWindow::GameWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -18,6 +19,9 @@ GameWindow::GameWindow(QWidget* parent)
     ui.setupUi(this);
     ui.boardArea->setBoard(&board_);
 
+    ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
+
+    auto* paginaJoc = takeCentralWidget();
     auto* pagini = new QStackedWidget(this);
 
     // 1. Meniul principal
@@ -81,7 +85,7 @@ GameWindow::GameWindow(QWidget* parent)
 
     // 5. Paginile jocului
     pagini->addWidget(paginaStart);
-    pagini->addWidget(ui.boardArea);
+    pagini->addWidget(paginaJoc);
 
     setCentralWidget(pagini);
 
@@ -94,7 +98,7 @@ GameWindow::GameWindow(QWidget* parent)
 
         QPixmap captura = paginaStart->grab();
 
-        pagini->setCurrentWidget(ui.boardArea);
+        pagini->setCurrentIndex(1);
 
         auto* tranzitie = new QLabel(pagini);
 
@@ -121,6 +125,20 @@ GameWindow::GameWindow(QWidget* parent)
         animatie->start(QAbstractAnimation::DeleteWhenStopped);
         });
 
+    // Regenerarea energiei
+    auto* gameTimer = new QTimer(this);
+
+    connect(gameTimer, &QTimer::timeout, this, [this, pagini]() {
+
+        if (pagini->currentIndex() != 1)
+            return;
+
+        board_.updateEnergy(0.05);
+        ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
+        });
+
+    gameTimer->start(50);
+
     // 7. Control temporar pentru testarea daunelor
 
     // Tasta D - daune pentru castelul albastru
@@ -128,7 +146,7 @@ GameWindow::GameWindow(QWidget* parent)
 
     connect(damageShortcut, &QShortcut::activated, this, [this, pagini]() {
 
-        if (pagini->currentWidget() != ui.boardArea)
+        if (pagini->currentIndex() != 1)
             return;
 
         board_.getComputerCastle().takeDamage(100);
@@ -140,11 +158,23 @@ GameWindow::GameWindow(QWidget* parent)
 
     connect(redDamageShortcut, &QShortcut::activated, this, [this, pagini]() {
 
-        if (pagini->currentWidget() != ui.boardArea)
+        if (pagini->currentIndex() != 1)
             return;
 
         board_.getPlayerCastle().takeDamage(100);
         ui.boardArea->update();
+        });
+
+    // Tasta E - consum de energie
+    auto* energyShortcut = new QShortcut(QKeySequence(Qt::Key_E), this);
+
+    connect(energyShortcut, &QShortcut::activated, this, [this, pagini]() {
+
+        if (pagini->currentIndex() != 1)
+            return;
+
+        if (board_.spendPlayerEnergy(3.0))
+            ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
         });
 
     // Tasta R - resetarea jocului
@@ -152,10 +182,11 @@ GameWindow::GameWindow(QWidget* parent)
 
     connect(resetShortcut, &QShortcut::activated, this, [this, pagini]() {
 
-        if (pagini->currentWidget() != ui.boardArea)
+        if (pagini->currentIndex() != 1)
             return;
 
         board_.reset();
+        ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
         ui.boardArea->update();
         });
 
