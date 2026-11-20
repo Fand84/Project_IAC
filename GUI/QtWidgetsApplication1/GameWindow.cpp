@@ -1,3 +1,4 @@
+
 #include "GameWindow.h"
 #include <QShortcut>
 #include <QKeySequence>
@@ -17,9 +18,14 @@ GameWindow::GameWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
-    ui.boardArea->setBoard(&board_);
 
-    ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
+    ui.boardArea->setBoard(&game_.getBoard());
+    ui.boardArea->setGame(&game_);
+
+    ui.energyWidget->setEnergy(
+        game_.getPlayerEnergy(),
+        game_.getMaxEnergy()
+    );
 
     auto* paginaJoc = takeCentralWidget();
     auto* pagini = new QStackedWidget(this);
@@ -125,7 +131,7 @@ GameWindow::GameWindow(QWidget* parent)
         animatie->start(QAbstractAnimation::DeleteWhenStopped);
         });
 
-    // Regenerarea energiei
+    // Regenerarea energiei si actualizarea soldatilor
     auto* gameTimer = new QTimer(this);
 
     connect(gameTimer, &QTimer::timeout, this, [this, pagini]() {
@@ -133,13 +139,19 @@ GameWindow::GameWindow(QWidget* parent)
         if (pagini->currentIndex() != 1)
             return;
 
-        board_.updateEnergy(0.05);
-        ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
+        game_.update(0.05);
+
+        ui.energyWidget->setEnergy(
+            game_.getPlayerEnergy(),
+            game_.getMaxEnergy()
+        );
+
+        ui.boardArea->update();
         });
 
     gameTimer->start(50);
 
-    // 7. Control temporar pentru testarea daunelor
+    // 7. Control temporar pentru testare
 
     // Tasta D - daune pentru castelul albastru
     auto* damageShortcut = new QShortcut(QKeySequence(Qt::Key_D), this);
@@ -149,7 +161,7 @@ GameWindow::GameWindow(QWidget* parent)
         if (pagini->currentIndex() != 1)
             return;
 
-        board_.getComputerCastle().takeDamage(100);
+        game_.getBoard().getComputerCastle().takeDamage(100);
         ui.boardArea->update();
         });
 
@@ -161,11 +173,11 @@ GameWindow::GameWindow(QWidget* parent)
         if (pagini->currentIndex() != 1)
             return;
 
-        board_.getPlayerCastle().takeDamage(100);
+        game_.getBoard().getPlayerCastle().takeDamage(100);
         ui.boardArea->update();
         });
 
-    // Tasta E - consum de energie
+    // Tasta E - generam un soldat rosu pe banda de sus
     auto* energyShortcut = new QShortcut(QKeySequence(Qt::Key_E), this);
 
     connect(energyShortcut, &QShortcut::activated, this, [this, pagini]() {
@@ -173,8 +185,20 @@ GameWindow::GameWindow(QWidget* parent)
         if (pagini->currentIndex() != 1)
             return;
 
-        if (board_.spendPlayerEnergy(3.0))
-            ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
+        if (game_.spawnUnit(
+            UnitType::Soldat,
+            PlayerSide::Player,
+            Lane::Top,
+            UnitStats::getDefaultsFor(UnitType::Soldat)
+        ))
+        {
+            ui.energyWidget->setEnergy(
+                game_.getPlayerEnergy(),
+                game_.getMaxEnergy()
+            );
+
+            ui.boardArea->update();
+        }
         });
 
     // Tasta R - resetarea jocului
@@ -185,8 +209,13 @@ GameWindow::GameWindow(QWidget* parent)
         if (pagini->currentIndex() != 1)
             return;
 
-        board_.reset();
-        ui.energyWidget->setEnergy(board_.getPlayerEnergy(), board_.getMaxEnergy());
+        game_.restart();
+
+        ui.energyWidget->setEnergy(
+            game_.getPlayerEnergy(),
+            game_.getMaxEnergy()
+        );
+
         ui.boardArea->update();
         });
 
