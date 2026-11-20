@@ -37,6 +37,7 @@ public:
 
     [[nodiscard]] double getPlayerEnergy() const noexcept;
     [[nodiscard]] double getMaxEnergy() const noexcept;
+    [[nodiscard]] Board& getBoard() noexcept { return board_; }
     [[nodiscard]] const Board& getBoard() const noexcept;
     [[nodiscard]] const std::vector<std::unique_ptr<Unit>>& getUnits() const noexcept;
     [[nodiscard]] bool isGameOver() const noexcept;

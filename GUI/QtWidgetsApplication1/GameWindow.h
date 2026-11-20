@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../Core/Board.h"
+#include "../../Core/Game.h"
 #include <QtWidgets/QMainWindow>
 #include "ui_GameWindow.h"
 
@@ -14,5 +14,5 @@ public:
 
 private:
     Ui::GameWindowClass ui;
-    Board board_;
+    Game game_;
 };

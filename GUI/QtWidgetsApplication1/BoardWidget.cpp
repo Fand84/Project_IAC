@@ -1,5 +1,7 @@
+
 #include "BoardWidget.h"
 #include "../../Core/Board.h"
+#include "../../Core/Game.h"
 #include <QPainter>
 #include <QPixmap>
 #include <QColor>
@@ -15,6 +17,12 @@ BoardWidget::BoardWidget(QWidget* parent)
 void BoardWidget::setBoard(const Board* board)
 {
     board_ = board;
+    update();
+}
+
+void BoardWidget::setGame(const Game* game)
+{
+    game_ = game;
     update();
 }
 
@@ -152,6 +160,46 @@ void BoardWidget::paintEvent(QPaintEvent*)
         imagineAlbastraOglindita
     );
 
+    // 6. Desenam soldatii
+    if (game_ != nullptr)
+    {
+        double lungimeBanda = game_->getBoard().getLaneLength();
+
+        if (lungimeBanda > 0)
+        {
+            int inceput = xRosu + dimensiuneRosie.width() - 20;
+            int sfarsit = xAlbastru + 20;
+
+            for (const auto& unit : game_->getUnits())
+            {
+                if (!unit || !unit->isAlive())
+                    continue;
+
+                double progres = unit->getPositionX() / lungimeBanda;
+
+                int x = inceput +
+                    static_cast<int>((sfarsit - inceput) * progres);
+
+                int y;
+
+                if (unit->getLane() == 0)
+                    y = liniaSus - 12;
+                else
+                    y = liniaJos - 12;
+
+                painter.setPen(Qt::black);
+
+                if (unit->getOwner() == PlayerSide::Player)
+                    painter.setBrush(QColor(190, 30, 30));
+                else
+                    painter.setBrush(QColor(30, 90, 210));
+
+                painter.drawEllipse(QPoint(x, y), 12, 12);
+            }
+        }
+    }
+
+    // 7. Afisam viata castelelor
     if (board_ != nullptr)
     {
         const Castle& rosu = board_->getPlayerCastle();

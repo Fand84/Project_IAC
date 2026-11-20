@@ -4,6 +4,8 @@
 
 class Board;
 
+class Game;
+
 class BoardWidget : public QWidget
 {
 public:
@@ -11,9 +13,12 @@ public:
 
     void setBoard(const Board* board);
 
+    void setGame(const Game* game);
+
 protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
     const Board* board_ = nullptr;
+    const Game* game_ = nullptr;
 };
