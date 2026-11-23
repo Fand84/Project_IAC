@@ -9,6 +9,7 @@
 #include <QString>
 #include <QRect>
 #include <QSize>
+#include <QDateTime>
 
 BoardWidget::BoardWidget(QWidget* parent)
     : QWidget(parent)
@@ -161,6 +162,9 @@ void BoardWidget::paintEvent(QPaintEvent*)
     );
 
     // 6. Desenam soldatii
+    QPixmap animatieSoldat(":/images/Personaje/soldat.png");
+    QPixmap animatieAlbastru(":/images/Personaje/soldat_albastru.png");
+
     if (game_ != nullptr)
     {
         double lungimeBanda = game_->getBoard().getLaneLength();
@@ -187,14 +191,59 @@ void BoardWidget::paintEvent(QPaintEvent*)
                 else
                     y = liniaJos - 12;
 
-                painter.setPen(Qt::black);
 
-                if (unit->getOwner() == PlayerSide::Player)
-                    painter.setBrush(QColor(190, 30, 30));
+
+
+                bool esteRosu = unit->getOwner() == PlayerSide::Player;
+
+                const QPixmap& imagine = esteRosu
+                    ? animatieSoldat
+                    : animatieAlbastru;
+
+                if (!imagine.isNull())
+                {
+                    // Plansele au 4 coloane si 2 randuri
+                    int latimeCadru = imagine.width() / 8;
+                    int inaltimeCadru = imagine.height();
+
+                    // Folosim cele 4 cadre de mers
+                    double distanta = esteRosu
+                        ? unit->getPositionX()
+                        : game_->getBoard().getLaneLength() - unit->getPositionX();
+
+                    bool ajunsLaCastel = esteRosu
+                        ? unit->getPositionX() >= game_->getBoard().getLaneLength()
+                        : unit->getPositionX() <= 0.0;
+
+                    int cadru = ajunsLaCastel
+                        ? 0
+                        : (static_cast<int>(distanta / 9.0) % 4) * 2;
+
+                    QRect sursa(
+                        cadru * latimeCadru,
+                        0,
+                        latimeCadru,
+                        inaltimeCadru
+                    );
+
+                    // Pozitia soldatului pe tabla
+                    QRect destinatie(x - 35, y - 84, 70, 96);
+
+                    painter.drawPixmap(destinatie, imagine, sursa);
+                }
                 else
-                    painter.setBrush(QColor(30, 90, 210));
+                {
+                    painter.setPen(Qt::black);
 
-                painter.drawEllipse(QPoint(x, y), 12, 12);
+                    painter.setBrush(esteRosu
+                        ? QColor(190, 30, 30)
+                        : QColor(30, 90, 210));
+
+                    painter.drawEllipse(QPoint(x, y), 12, 12);
+                }
+
+
+
             }
         }
     }

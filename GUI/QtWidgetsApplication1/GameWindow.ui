@@ -41,6 +41,92 @@
 					</widget>
 				</item>
 				<item>
+					<widget class="QWidget" name="unitPanel">
+						<property name="styleSheet">
+							<string notr="true">
+								QWidget#unitPanel {
+								background-color: #38281F;
+								border-radius: 8px;
+								}
+
+								QPushButton {
+								background-color: #705036;
+								color: #F9E6BA;
+								border: 2px solid #D4AA65;
+								border-radius: 10px;
+								min-width: 85px;
+								max-width: 85px;
+								min-height: 90px;
+								max-height: 90px;
+								padding: 4px;
+								font: bold 12px "Georgia";
+								}
+
+								QPushButton:hover {
+								background-color: #916843;
+								}
+
+								QPushButton:pressed {
+								background-color: #B58A50;
+								}
+							</string>
+						</property>
+						<layout class="QHBoxLayout" name="unitLayout">
+							<item>
+								<spacer name="unitSpacer">
+									<property name="orientation">
+										<enum>Qt::Horizontal</enum>
+									</property>
+									<property name="sizeType">
+										<enum>QSizePolicy::Expanding</enum>
+									</property>
+									<property name="sizeHint" stdset="0">
+										<size>
+											<width>20</width>
+											<height>20</height>
+										</size>
+									</property>
+								</spacer>
+							</item>
+							<item>
+								<widget class="QPushButton" name="soldatButton">
+									<property name="text">
+										<string>⚔&#10;Soldat&#10;3 energie</string>
+									</property>
+								</widget>
+							</item>
+							<item>
+								<widget class="QPushButton" name="tancButton">
+									<property name="text">
+										<string>🛡&#10;Tanc&#10;5 energie</string>
+									</property>
+								</widget>
+							</item>
+							<item>
+								<widget class="QPushButton" name="arcasButton">
+									<property name="text">
+										<string>🏹&#10;Arcas&#10;3 energie</string>
+									</property>
+								</widget>
+							</item>
+							<item>
+								<widget class="QPushButton" name="cercetasButton">
+									<property name="text">
+										<string>★&#10;Cercetas&#10;2 energie</string>
+									</property>
+								</widget>
+							</item>
+							<item>
+								<widget class="QPushButton" name="magButton">
+									<property name="text">
+										<string>✦&#10;Mag&#10;4 energie</string>
+									</property>
+								</widget>
+							</item>
+						</layout>
+					</widget>
+				</item>
+				<item>
 					<widget class="EnergyWidget" name="energyWidget" native="true"/>
 				</item>
 			</layout>

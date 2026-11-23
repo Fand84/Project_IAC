@@ -14,11 +14,25 @@ void Game::update(double deltaTime) {
         playerEnergy_ = std::min(maxEnergy_, playerEnergy_ + energyRegenRate_ * deltaTime);
     }
 
+
     for (const auto& unit : units_) {
         if (unit && unit->isAlive()) {
-            unit->move(deltaTime);
+
+            double pozitie = unit->getPositionX();
+
+            if (unit->getOwner() == PlayerSide::Player) {
+                if (pozitie < board_.getLaneLength()) {
+                    unit->move(deltaTime);
+                }
+            }
+            else {
+                if (pozitie > 0) {
+                    unit->move(deltaTime);
+                }
+            }
         }
     }
+
 
     std::erase_if(units_, [](const std::unique_ptr<Unit>& unit) {
         return !unit || !unit->isAlive();
