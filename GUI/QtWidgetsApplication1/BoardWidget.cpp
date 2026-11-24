@@ -10,6 +10,7 @@
 #include <QRect>
 #include <QSize>
 #include <QDateTime>
+#include <QMouseEvent>
 
 BoardWidget::BoardWidget(QWidget* parent)
     : QWidget(parent)
@@ -335,4 +336,28 @@ void BoardWidget::paintEvent(QPaintEvent*)
             painter.drawText(zonaMesaj, Qt::AlignCenter, mesaj);
         }
     }
+}
+
+void BoardWidget::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton && game_ != nullptr && !game_->isGameOver())
+    {
+        // Ignoram click-urile din zona de jos unde sunt asezate cartonasele
+        if (event->pos().y() > height() - 140)
+        {
+            QWidget::mousePressEvent(event);
+            return;
+        }
+
+        const Lane selectedLane = (event->pos().y() < height() / 2)
+            ? Lane::Top
+            : Lane::Bottom;
+
+        if (onLaneClicked_)
+        {
+            onLaneClicked_(selectedLane);
+        }
+    }
+
+    QWidget::mousePressEvent(event);
 }
