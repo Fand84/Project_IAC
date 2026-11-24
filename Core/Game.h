@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <string>
 
 #include "Board.h"
 #include "Unit.h"
@@ -18,7 +19,12 @@ private:
     double maxEnergy_{ 10.0 };
     double energyRegenRate_{ 1.0 };
 
+    double matchDuration_{ 0.0 };
+    int playerUnitsSpawned_{ 0 };
     bool isRunning_{ true };
+    bool resultSaved_{ false };
+
+    void saveMatchResult() const;
 
 public:
     explicit Game(double laneLength = 1000.0, int castleHp = 1000) noexcept;
@@ -41,6 +47,7 @@ public:
     [[nodiscard]] const Board& getBoard() const noexcept;
     [[nodiscard]] const std::vector<std::unique_ptr<Unit>>& getUnits() const noexcept;
     [[nodiscard]] bool isGameOver() const noexcept;
+    [[nodiscard]] std::string getWinnerText() const;
 
     void restart() noexcept;
 };
