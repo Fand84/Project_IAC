@@ -1,4 +1,3 @@
-
 #include "GameWindow.h"
 #include <QShortcut>
 #include <QKeySequence>
@@ -20,7 +19,6 @@ GameWindow::GameWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
-
 
     // Mutam panoul peste arena, fara sa ocupam un rand separat
     ui.verticalLayout->removeWidget(ui.unitPanel);
@@ -49,6 +47,7 @@ GameWindow::GameWindow(QWidget* parent)
             buton->setStyleSheet(
                 "QPushButton { background: transparent; border: none; padding: 0px; }"
                 "QPushButton:checked { border: 2px solid #FFE7A0; border-radius: 10px; }"
+                "QPushButton:disabled { opacity: 0.4; }"
             );
         };
 
@@ -82,9 +81,30 @@ GameWindow::GameWindow(QWidget* parent)
 
     layoutArena->addLayout(randCartonase);
 
-
     ui.boardArea->setBoard(&game_.getBoard());
     ui.boardArea->setGame(&game_);
+
+    // Plasarea unitatii selectate la click pe banda de sus sau de jos
+    ui.boardArea->setOnLaneClicked([this](Lane lane) {
+        UnitType selectedType = UnitType::Soldat;
+        if (ui.tancButton->isChecked())
+            selectedType = UnitType::Tanc;
+        else if (ui.arcasButton->isChecked())
+            selectedType = UnitType::Arcas;
+        else if (ui.cercetasButton->isChecked())
+            selectedType = UnitType::Cercetas;
+        else if (ui.magButton->isChecked())
+            selectedType = UnitType::Mag;
+
+        if (game_.spawnUnit(selectedType, PlayerSide::Player, lane))
+        {
+            ui.energyWidget->setEnergy(
+                game_.getPlayerEnergy(),
+                game_.getMaxEnergy()
+            );
+            ui.boardArea->update();
+        }
+        });
 
     ui.energyWidget->setEnergy(
         game_.getPlayerEnergy(),
@@ -210,11 +230,17 @@ GameWindow::GameWindow(QWidget* parent)
             game_.getMaxEnergy()
         );
 
+        // Activam/dezactivam cartonasele in functie de costul de energie
+        ui.soldatButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Soldat).cost));
+        ui.tancButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Tanc).cost));
+        ui.arcasButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Arcas).cost));
+        ui.cercetasButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Cercetas).cost));
+        ui.magButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Mag).cost));
+
         ui.boardArea->update();
         });
 
     gameTimer->start(16);
-
 
     // Calculatorul trimite automat soldati
     auto* computerTimer = new QTimer(this);
@@ -224,7 +250,6 @@ GameWindow::GameWindow(QWidget* parent)
 
             if (pagini->currentIndex() != 1 || game_.isGameOver())
                 return;
-
 
             // Limitam numarul soldatilor calculatorului
             int numarAlbastri = 0;
@@ -240,8 +265,6 @@ GameWindow::GameWindow(QWidget* parent)
 
             if (numarAlbastri >= 6)
                 return;
-
-
 
             int rosiiSus = 0;
             int rosiiJos = 0;
@@ -283,9 +306,7 @@ GameWindow::GameWindow(QWidget* parent)
 
     computerTimer->start(5000);
 
-
     // 7. Control temporar pentru testare
-
     // Tasta D - daune pentru castelul albastru
     auto* damageShortcut = new QShortcut(QKeySequence(Qt::Key_D), this);
 
@@ -337,7 +358,6 @@ GameWindow::GameWindow(QWidget* parent)
         }
         });
 
-
     // Tasta J - soldat pe banda de jos
     auto* bottomShortcut = new QShortcut(QKeySequence(Qt::Key_J), this);
 
@@ -364,7 +384,6 @@ GameWindow::GameWindow(QWidget* parent)
         }
         });
 
-
     // Tasta R - resetarea jocului
     auto* resetShortcut = new QShortcut(QKeySequence(Qt::Key_R), this);
 
@@ -388,4 +407,5 @@ GameWindow::GameWindow(QWidget* parent)
 }
 
 GameWindow::~GameWindow()
-{}
+{
+}
