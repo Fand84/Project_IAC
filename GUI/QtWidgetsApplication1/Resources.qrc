@@ -11,5 +11,12 @@
         <file>castel_rosu_normal.png</file>
         <file>arena_meniu.png</file>
         <file>buton_start_medieval.png</file>
+        <file>Personaje/soldat.png</file>
+        <file>Personaje/soldat_albastru.png</file>
+        <file>Cartonase/arcas.png</file>
+        <file>Cartonase/cavaler.png</file>
+        <file>Cartonase/cercetas.png</file>
+        <file>Cartonase/mag.png</file>
+        <file>Cartonase/soldat.png</file>
     </qresource>
 </RCC>

@@ -1,5 +1,7 @@
+
 #include "BoardWidget.h"
 #include "../../Core/Board.h"
+#include "../../Core/Game.h"
 #include <QPainter>
 #include <QPixmap>
 #include <QColor>
@@ -7,6 +9,7 @@
 #include <QString>
 #include <QRect>
 #include <QSize>
+#include <QDateTime>
 
 BoardWidget::BoardWidget(QWidget* parent)
     : QWidget(parent)
@@ -15,6 +18,12 @@ BoardWidget::BoardWidget(QWidget* parent)
 void BoardWidget::setBoard(const Board* board)
 {
     board_ = board;
+    update();
+}
+
+void BoardWidget::setGame(const Game* game)
+{
+    game_ = game;
     update();
 }
 
@@ -152,6 +161,94 @@ void BoardWidget::paintEvent(QPaintEvent*)
         imagineAlbastraOglindita
     );
 
+    // 6. Desenam soldatii
+    QPixmap animatieSoldat(":/images/Personaje/soldat.png");
+    QPixmap animatieAlbastru(":/images/Personaje/soldat_albastru.png");
+
+    if (game_ != nullptr)
+    {
+        double lungimeBanda = game_->getBoard().getLaneLength();
+
+        if (lungimeBanda > 0)
+        {
+            int inceput = xRosu + dimensiuneRosie.width() - 20;
+            int sfarsit = xAlbastru + 20;
+
+            for (const auto& unit : game_->getUnits())
+            {
+                if (!unit || !unit->isAlive())
+                    continue;
+
+                double progres = unit->getPositionX() / lungimeBanda;
+
+                int x = inceput +
+                    static_cast<int>((sfarsit - inceput) * progres);
+
+                int y;
+
+                if (unit->getLane() == 0)
+                    y = liniaSus - 12;
+                else
+                    y = liniaJos - 12;
+
+
+
+
+                bool esteRosu = unit->getOwner() == PlayerSide::Player;
+
+                const QPixmap& imagine = esteRosu
+                    ? animatieSoldat
+                    : animatieAlbastru;
+
+                if (!imagine.isNull())
+                {
+                    // Plansele au 4 coloane si 2 randuri
+                    int latimeCadru = imagine.width() / 8;
+                    int inaltimeCadru = imagine.height();
+
+                    // Folosim cele 4 cadre de mers
+                    double distanta = esteRosu
+                        ? unit->getPositionX()
+                        : game_->getBoard().getLaneLength() - unit->getPositionX();
+
+                    bool ajunsLaCastel = esteRosu
+                        ? unit->getPositionX() >= game_->getBoard().getLaneLength()
+                        : unit->getPositionX() <= 0.0;
+
+                    int cadru = ajunsLaCastel
+                        ? 0
+                        : (static_cast<int>(distanta / 9.0) % 4) * 2;
+
+                    QRect sursa(
+                        cadru * latimeCadru,
+                        0,
+                        latimeCadru,
+                        inaltimeCadru
+                    );
+
+                    // Pozitia soldatului pe tabla
+                    QRect destinatie(x - 35, y - 84, 70, 96);
+
+                    painter.drawPixmap(destinatie, imagine, sursa);
+                }
+                else
+                {
+                    painter.setPen(Qt::black);
+
+                    painter.setBrush(esteRosu
+                        ? QColor(190, 30, 30)
+                        : QColor(30, 90, 210));
+
+                    painter.drawEllipse(QPoint(x, y), 12, 12);
+                }
+
+
+
+            }
+        }
+    }
+
+    // 7. Afisam viata castelelor
     if (board_ != nullptr)
     {
         const Castle& rosu = board_->getPlayerCastle();
