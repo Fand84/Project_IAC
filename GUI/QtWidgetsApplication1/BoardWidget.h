@@ -1,10 +1,12 @@
 #pragma once
 #include <QWidget>
 #include <functional>
+#include <utility>
 #include "../../Core/Enums.h"
 
 class Board;
 class Game;
+class QPainter;
 
 class BoardWidget : public QWidget {
 public:
@@ -18,6 +20,9 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
 
 private:
+    void deseneazaUnitati(QPainter& painter, int inceput, int sfarsit, int liniaSus, int liniaJos) const;
+    void deseneazaViata(QPainter& painter) const;
+
     const Board* board_ = nullptr;
     const Game* game_ = nullptr;
     std::function<void(Lane)> onLaneClicked_;

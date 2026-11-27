@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <cmath>
 
 
 
@@ -18,9 +19,6 @@ void Game::update(double deltaTime) {
 
 	}
 
-
-
-
 	if (playerEnergy_ < maxEnergy_) {
 
 		playerEnergy_ = std::min(maxEnergy_, playerEnergy_ + energyRegenRate_ * deltaTime);
@@ -28,16 +26,39 @@ void Game::update(double deltaTime) {
 	}
 
 
+	for (const auto& unit : units_)
+	{
+		if (!unit || !unit->isAlive())
+			continue;
 
-	for (const auto& unit : units_) {
+		bool poateMerge = true;
 
-		if (unit && unit->isAlive()) {
+		for (const auto& adversar : units_)
+		{
+			if (!adversar || !adversar->isAlive())
+				continue;
 
-			unit->move(deltaTime);
+			if (unit->getOwner() == adversar->getOwner() ||
+				unit->getLane() != adversar->getLane())
+				continue;
 
+			double distanta = adversar->getPositionX() - unit->getPositionX();
+
+			bool inFata = unit->getOwner() == PlayerSide::Player
+				? distanta >= 0
+				: distanta <= 0;
+
+			if (inFata && std::abs(distanta) <= unit->getRange())
+			{
+				poateMerge = false;
+				break;
+			}
 		}
 
+		if (poateMerge)
+			unit->move(deltaTime);
 	}
+
 
 
 
