@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <cmath>
 
 
 
@@ -18,9 +19,6 @@ void Game::update(double deltaTime) {
 
 	}
 
-
-
-
 	if (playerEnergy_ < maxEnergy_) {
 
 		playerEnergy_ = std::min(maxEnergy_, playerEnergy_ + energyRegenRate_ * deltaTime);
@@ -28,16 +26,39 @@ void Game::update(double deltaTime) {
 	}
 
 
+	for (const auto& unit : units_)
+	{
+		if (!unit || !unit->isAlive())
+			continue;
 
-	for (const auto& unit : units_) {
+		bool poateMerge = true;
 
-		if (unit && unit->isAlive()) {
+		for (const auto& adversar : units_)
+		{
+			if (!adversar || !adversar->isAlive())
+				continue;
 
-			unit->move(deltaTime);
+			if (unit->getOwner() == adversar->getOwner() ||
+				unit->getLane() != adversar->getLane())
+				continue;
 
+			double distanta = adversar->getPositionX() - unit->getPositionX();
+
+			bool inFata = unit->getOwner() == PlayerSide::Player
+				? distanta >= 0
+				: distanta <= 0;
+
+			if (inFata && std::abs(distanta) <= unit->getRange())
+			{
+				poateMerge = false;
+				break;
+			}
 		}
 
+		if (poateMerge)
+			unit->move(deltaTime);
 	}
+
 
 
 
@@ -58,6 +79,11 @@ void Game::update(double deltaTime) {
 }
 
 
+bool Game::spawnUnit(UnitType type, PlayerSide side, Lane lane)
+{
+	return spawnUnit(type, side, lane, UnitStats::getDefaultsFor(type));
+}
+
 
 bool Game::canPlaceUnit(int cost) const noexcept {
 
@@ -74,7 +100,6 @@ bool Game::spawnUnit(UnitType type, PlayerSide side, Lane lane, const UnitStats&
 		if (!canPlaceUnit(stats.cost)) {
 
 			return false;
-
 		}
 
 		playerEnergy_ -= static_cast<double>(stats.cost);
@@ -91,21 +116,31 @@ bool Game::spawnUnit(UnitType type, PlayerSide side, Lane lane, const UnitStats&
 
 
 
-	units_.push_back(std::make_unique<Unit>(
 
-		type,
+	int numarBanda = static_cast<int>(lane);
 
-		side,
+	switch (type)
+	{
+	case UnitType::Soldat:
+		units_.push_back(std::make_unique<Soldat>(side, numarBanda, startX, stats));
+		break;
 
-		static_cast<int>(lane),
+	case UnitType::Tanc:
+		units_.push_back(std::make_unique<Tanc>(side, numarBanda, startX, stats));
+		break;
 
-		startX,
+	case UnitType::Arcas:
+		units_.push_back(std::make_unique<Arcas>(side, numarBanda, startX, stats));
+		break;
 
-		stats
+	case UnitType::Cercetas:
+		units_.push_back(std::make_unique<Cercetas>(side, numarBanda, startX, stats));
+		break;
 
-	));
-
-
+	case UnitType::Mag:
+		units_.push_back(std::make_unique<Mag>(side, numarBanda, startX, stats));
+		break;
+	}
 
 	return true;
 

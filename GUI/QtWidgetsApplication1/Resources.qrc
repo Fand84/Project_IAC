@@ -18,5 +18,13 @@
         <file>Cartonase/cercetas.png</file>
         <file>Cartonase/mag.png</file>
         <file>Cartonase/soldat.png</file>
+        <file>Personaje/arcas.png</file>
+        <file>Personaje/arcas_albastru.png</file>
+        <file>Personaje/cavaler.png</file>
+        <file>Personaje/cavaler_albastru.png</file>
+        <file>Personaje/cercetas.png</file>
+        <file>Personaje/cercetas_albastru.png</file>
+        <file>Personaje/mag.png</file>
+        <file>Personaje/mag_albastru.png</file>
     </qresource>
 </RCC>

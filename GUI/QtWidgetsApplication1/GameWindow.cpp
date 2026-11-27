@@ -3,6 +3,7 @@
 #include <QKeySequence>
 #include <QStackedWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QPixmap>
@@ -13,18 +14,16 @@
 #include <QPropertyAnimation>
 #include <QTimer>
 #include <QIcon>
-#include <QHBoxLayout>
 
 GameWindow::GameWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
 
-    // Mutam panoul peste arena, fara sa ocupam un rand separat
+    // Move the unit panel over the arena
     ui.verticalLayout->removeWidget(ui.unitPanel);
     ui.unitPanel->setParent(ui.boardArea);
 
-    // Eliminam fundalul maro
     ui.unitPanel->setStyleSheet(
         "QWidget#unitPanel { background: transparent; }"
     );
@@ -32,7 +31,7 @@ GameWindow::GameWindow(QWidget* parent)
     ui.unitLayout->setContentsMargins(0, 0, 0, 0);
     ui.unitLayout->setSpacing(0);
 
-    // Pregatim cartonașele
+    // Configure unit cards
     auto pregatesteCartonas = [](QPushButton* buton, const QString& imagine)
         {
             buton->setText("");
@@ -69,7 +68,7 @@ GameWindow::GameWindow(QWidget* parent)
     ui.soldatButton->setChecked(true);
     ui.unitPanel->setFixedSize(465, 122);
 
-    // Pozitionam cartonașele in dreapta jos, peste arena
+    // Position unit cards in the bottom-right corner
     auto* layoutArena = new QVBoxLayout(ui.boardArea);
     layoutArena->setContentsMargins(0, 0, 10, 8);
 
@@ -81,40 +80,56 @@ GameWindow::GameWindow(QWidget* parent)
 
     layoutArena->addLayout(randCartonase);
 
+    // Connect the board widget to the game
     ui.boardArea->setBoard(&game_.getBoard());
     ui.boardArea->setGame(&game_);
 
-    // Plasarea unitatii selectate la click pe banda de sus sau de jos
-    ui.boardArea->setOnLaneClicked([this](Lane lane) {
-        UnitType selectedType = UnitType::Soldat;
-        if (ui.tancButton->isChecked())
-            selectedType = UnitType::Tanc;
-        else if (ui.arcasButton->isChecked())
-            selectedType = UnitType::Arcas;
-        else if (ui.cercetasButton->isChecked())
-            selectedType = UnitType::Cercetas;
-        else if (ui.magButton->isChecked())
-            selectedType = UnitType::Mag;
-
-        if (game_.spawnUnit(selectedType, PlayerSide::Player, lane))
+    // Spawn the selected unit type
+    auto genereazaUnitate = [this](Lane banda)
         {
-            ui.energyWidget->setEnergy(
-                game_.getPlayerEnergy(),
-                game_.getMaxEnergy()
-            );
-            ui.boardArea->update();
-        }
-        });
+            if (game_.isGameOver())
+                return;
+
+            UnitType tip = UnitType::Soldat;
+
+            if (ui.tancButton->isChecked())
+                tip = UnitType::Tanc;
+            else if (ui.arcasButton->isChecked())
+                tip = UnitType::Arcas;
+            else if (ui.cercetasButton->isChecked())
+                tip = UnitType::Cercetas;
+            else if (ui.magButton->isChecked())
+                tip = UnitType::Mag;
+
+            UnitStats stats = UnitStats::getDefaultsFor(tip);
+
+            // Temporary movement speed for gameplay testing
+            stats.speed = 500.0;
+
+            if (game_.spawnUnit(tip, PlayerSide::Player, banda, stats))
+            {
+                ui.energyWidget->setEnergy(
+                    game_.getPlayerEnergy(),
+                    game_.getMaxEnergy()
+                );
+
+                ui.boardArea->update();
+            }
+        };
+
+    // Spawn units when a lane is clicked
+    ui.boardArea->setOnLaneClicked(genereazaUnitate);
 
     ui.energyWidget->setEnergy(
         game_.getPlayerEnergy(),
         game_.getMaxEnergy()
     );
 
+    // Set up the game pages
     auto* paginaJoc = takeCentralWidget();
     auto* pagini = new QStackedWidget(this);
 
-    // 1. Meniul principal
+    // Main menu
     auto* paginaStart = new QLabel();
 
     paginaStart->setPixmap(QPixmap(":/images/arena_meniu.png"));
@@ -123,7 +138,7 @@ GameWindow::GameWindow(QWidget* parent)
 
     auto* layoutStart = new QVBoxLayout(paginaStart);
 
-    // 2. Titlul jocului
+    // Game title
     auto* titlu = new QLabel("CASTEL CRUSH");
 
     titlu->setAlignment(Qt::AlignCenter);
@@ -137,7 +152,6 @@ GameWindow::GameWindow(QWidget* parent)
         "font-weight: bold;"
     );
 
-    // Umbra titlului
     auto* umbraTitlu = new QGraphicsDropShadowEffect(titlu);
 
     umbraTitlu->setBlurRadius(18);
@@ -146,7 +160,7 @@ GameWindow::GameWindow(QWidget* parent)
 
     titlu->setGraphicsEffect(umbraTitlu);
 
-    // 3. Butonul de start
+    // Start button
     auto* butonStart = new QPushButton("INCEPE JOCUL");
 
     butonStart->setFixedSize(360, 105);
@@ -166,14 +180,14 @@ GameWindow::GameWindow(QWidget* parent)
         "}"
     );
 
-    // 4. Pozitionarea elementelor
+    // Arrange menu elements
     layoutStart->addStretch(3);
     layoutStart->addWidget(titlu, 0, Qt::AlignHCenter);
     layoutStart->addSpacing(140);
     layoutStart->addWidget(butonStart, 0, Qt::AlignHCenter);
     layoutStart->addStretch(8);
 
-    // 5. Paginile jocului
+    // Add the menu and gameplay pages
     pagini->addWidget(paginaStart);
     pagini->addWidget(paginaJoc);
 
@@ -183,75 +197,106 @@ GameWindow::GameWindow(QWidget* parent)
     ui.mainToolBar->hide();
     ui.statusBar->hide();
 
-    // 6. Trecerea de la meniu la joc
-    connect(butonStart, &QPushButton::clicked, this, [this, pagini, paginaStart]() {
+    // Fade transition from menu to gameplay
+    connect(butonStart, &QPushButton::clicked, this,
+        [this, pagini, paginaStart]()
+        {
+            QPixmap captura = paginaStart->grab();
 
-        QPixmap captura = paginaStart->grab();
+            pagini->setCurrentIndex(1);
 
-        pagini->setCurrentIndex(1);
+            auto* tranzitie = new QLabel(pagini);
 
-        auto* tranzitie = new QLabel(pagini);
+            tranzitie->setPixmap(captura);
+            tranzitie->setScaledContents(true);
+            tranzitie->setGeometry(pagini->rect());
+            tranzitie->show();
+            tranzitie->raise();
 
-        tranzitie->setPixmap(captura);
-        tranzitie->setScaledContents(true);
-        tranzitie->setGeometry(pagini->rect());
-        tranzitie->show();
-        tranzitie->raise();
+            auto* efect = new QGraphicsOpacityEffect(tranzitie);
 
-        auto* efect = new QGraphicsOpacityEffect(tranzitie);
+            tranzitie->setGraphicsEffect(efect);
+            efect->setOpacity(1.0);
 
-        tranzitie->setGraphicsEffect(efect);
-        efect->setOpacity(1.0);
+            auto* animatie = new QPropertyAnimation(
+                efect, "opacity", tranzitie
+            );
 
-        auto* animatie = new QPropertyAnimation(efect, "opacity", tranzitie);
+            animatie->setDuration(1500);
+            animatie->setStartValue(1.0);
+            animatie->setEndValue(0.0);
 
-        animatie->setDuration(1500);
-        animatie->setStartValue(1.0);
-        animatie->setEndValue(0.0);
+            connect(
+                animatie,
+                &QPropertyAnimation::finished,
+                tranzitie,
+                &QObject::deleteLater
+            );
 
-        connect(animatie, &QPropertyAnimation::finished,
-            tranzitie, &QObject::deleteLater);
-
-        animatie->start(QAbstractAnimation::DeleteWhenStopped);
+            animatie->start(QAbstractAnimation::DeleteWhenStopped);
         });
 
-    // Regenerarea energiei si actualizarea soldatilor
+    // Update gameplay and energy
     auto* gameTimer = new QTimer(this);
 
-    connect(gameTimer, &QTimer::timeout, this, [this, pagini]() {
+    connect(gameTimer, &QTimer::timeout, this, [this, pagini]()
+        {
+            if (pagini->currentIndex() != 1)
+                return;
 
-        if (pagini->currentIndex() != 1)
-            return;
+            game_.update(0.016);
 
-        game_.update(0.016);
+            ui.energyWidget->setEnergy(
+                game_.getPlayerEnergy(),
+                game_.getMaxEnergy()
+            );
 
-        ui.energyWidget->setEnergy(
-            game_.getPlayerEnergy(),
-            game_.getMaxEnergy()
-        );
+            // Enable or disable cards based on available energy
+            ui.soldatButton->setEnabled(
+                game_.canPlaceUnit(
+                    UnitStats::getDefaultsFor(UnitType::Soldat).cost
+                )
+            );
 
-        // Activam/dezactivam cartonasele in functie de costul de energie
-        ui.soldatButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Soldat).cost));
-        ui.tancButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Tanc).cost));
-        ui.arcasButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Arcas).cost));
-        ui.cercetasButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Cercetas).cost));
-        ui.magButton->setEnabled(game_.canPlaceUnit(UnitStats::getDefaultsFor(UnitType::Mag).cost));
+            ui.tancButton->setEnabled(
+                game_.canPlaceUnit(
+                    UnitStats::getDefaultsFor(UnitType::Tanc).cost
+                )
+            );
 
-        ui.boardArea->update();
+            ui.arcasButton->setEnabled(
+                game_.canPlaceUnit(
+                    UnitStats::getDefaultsFor(UnitType::Arcas).cost
+                )
+            );
+
+            ui.cercetasButton->setEnabled(
+                game_.canPlaceUnit(
+                    UnitStats::getDefaultsFor(UnitType::Cercetas).cost
+                )
+            );
+
+            ui.magButton->setEnabled(
+                game_.canPlaceUnit(
+                    UnitStats::getDefaultsFor(UnitType::Mag).cost
+                )
+            );
+
+            ui.boardArea->update();
         });
 
     gameTimer->start(16);
 
-    // Calculatorul trimite automat soldati
+    // Spawn computer-controlled soldiers
     auto* computerTimer = new QTimer(this);
 
     connect(computerTimer, &QTimer::timeout, this,
-        [this, pagini, bandaSus = true]() mutable {
-
+        [this, pagini, bandaSus = true]() mutable
+        {
             if (pagini->currentIndex() != 1 || game_.isGameOver())
                 return;
 
-            // Limitam numarul soldatilor calculatorului
+            // Limit the number of active computer units
             int numarAlbastri = 0;
 
             for (const auto& unit : game_.getUnits())
@@ -290,10 +335,11 @@ GameWindow::GameWindow(QWidget* parent)
             else
                 banda = bandaSus ? Lane::Top : Lane::Bottom;
 
+            // Set computer unit movement speed to 500
             UnitStats stats = UnitStats::getDefaultsFor(UnitType::Soldat);
             stats.speed = 500.0;
 
-            game_.spawnUnit(
+            (void)game_.spawnUnit(
                 UnitType::Soldat,
                 PlayerSide::Computer,
                 banda,
@@ -306,100 +352,81 @@ GameWindow::GameWindow(QWidget* parent)
 
     computerTimer->start(5000);
 
-    // 7. Control temporar pentru testare
-    // Tasta D - daune pentru castelul albastru
-    auto* damageShortcut = new QShortcut(QKeySequence(Qt::Key_D), this);
+    // Keyboard shortcuts for gameplay and testing
 
-    connect(damageShortcut, &QShortcut::activated, this, [this, pagini]() {
+    // D - damage the blue castle
+    auto* damageShortcut = new QShortcut(
+        QKeySequence(Qt::Key_D), this
+    );
 
-        if (pagini->currentIndex() != 1)
-            return;
-
-        game_.getBoard().getComputerCastle().takeDamage(100);
-        ui.boardArea->update();
-        });
-
-    // Tasta A - daune pentru castelul rosu
-    auto* redDamageShortcut = new QShortcut(QKeySequence(Qt::Key_A), this);
-
-    connect(redDamageShortcut, &QShortcut::activated, this, [this, pagini]() {
-
-        if (pagini->currentIndex() != 1)
-            return;
-
-        game_.getBoard().getPlayerCastle().takeDamage(100);
-        ui.boardArea->update();
-        });
-
-    // Tasta E - generam un soldat rosu pe banda de sus
-    auto* energyShortcut = new QShortcut(QKeySequence(Qt::Key_E), this);
-
-    connect(energyShortcut, &QShortcut::activated, this, [this, pagini]() {
-
-        if (pagini->currentIndex() != 1)
-            return;
-
-        UnitStats stats = UnitStats::getDefaultsFor(UnitType::Soldat);
-        stats.speed = 500.0;
-
-        if (game_.spawnUnit(
-            UnitType::Soldat,
-            PlayerSide::Player,
-            Lane::Top,
-            stats
-        ))
+    connect(damageShortcut, &QShortcut::activated, this,
+        [this, pagini]()
         {
+            if (pagini->currentIndex() != 1)
+                return;
+
+            game_.getBoard().getComputerCastle().takeDamage(100);
+            ui.boardArea->update();
+        });
+
+    // A - damage the red castle
+    auto* redDamageShortcut = new QShortcut(
+        QKeySequence(Qt::Key_A), this
+    );
+
+    connect(redDamageShortcut, &QShortcut::activated, this,
+        [this, pagini]()
+        {
+            if (pagini->currentIndex() != 1)
+                return;
+
+            game_.getBoard().getPlayerCastle().takeDamage(100);
+            ui.boardArea->update();
+        });
+
+    // E - spawn on the top lane
+    auto* topShortcut = new QShortcut(
+        QKeySequence(Qt::Key_E), this
+    );
+
+    connect(topShortcut, &QShortcut::activated, this,
+        [genereazaUnitate, pagini]()
+        {
+            if (pagini->currentIndex() == 1)
+                genereazaUnitate(Lane::Top);
+        });
+
+    // J - spawn on the bottom lane
+    auto* bottomShortcut = new QShortcut(
+        QKeySequence(Qt::Key_J), this
+    );
+
+    connect(bottomShortcut, &QShortcut::activated, this,
+        [genereazaUnitate, pagini]()
+        {
+            if (pagini->currentIndex() == 1)
+                genereazaUnitate(Lane::Bottom);
+        });
+
+    // R - restart the game
+    auto* resetShortcut = new QShortcut(
+        QKeySequence(Qt::Key_R), this
+    );
+
+    connect(resetShortcut, &QShortcut::activated, this,
+        [this, pagini]()
+        {
+            if (pagini->currentIndex() != 1)
+                return;
+
+            game_.restart();
+
             ui.energyWidget->setEnergy(
                 game_.getPlayerEnergy(),
                 game_.getMaxEnergy()
             );
 
             ui.boardArea->update();
-        }
-        });
-
-    // Tasta J - soldat pe banda de jos
-    auto* bottomShortcut = new QShortcut(QKeySequence(Qt::Key_J), this);
-
-    connect(bottomShortcut, &QShortcut::activated, this, [this, pagini]() {
-
-        if (pagini->currentIndex() != 1)
-            return;
-
-        UnitStats stats = UnitStats::getDefaultsFor(UnitType::Soldat);
-        stats.speed = 100.0;
-
-        if (game_.spawnUnit(
-            UnitType::Soldat,
-            PlayerSide::Player,
-            Lane::Bottom,
-            stats))
-        {
-            ui.energyWidget->setEnergy(
-                game_.getPlayerEnergy(),
-                game_.getMaxEnergy()
-            );
-
-            ui.boardArea->update();
-        }
-        });
-
-    // Tasta R - resetarea jocului
-    auto* resetShortcut = new QShortcut(QKeySequence(Qt::Key_R), this);
-
-    connect(resetShortcut, &QShortcut::activated, this, [this, pagini]() {
-
-        if (pagini->currentIndex() != 1)
-            return;
-
-        game_.restart();
-
-        ui.energyWidget->setEnergy(
-            game_.getPlayerEnergy(),
-            game_.getMaxEnergy()
-        );
-
-        ui.boardArea->update();
         });
 
     setWindowTitle("Castel Crush");
@@ -407,5 +434,4 @@ GameWindow::GameWindow(QWidget* parent)
 }
 
 GameWindow::~GameWindow()
-{
-}
+{}
